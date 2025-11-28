@@ -2,17 +2,46 @@
 import * as DataService from '../services/dataService.js';
 import { successResponse, errorResponse } from '../utils/responses.js';
 
-
 // --- Activity Retrieval & CRUD ---
 
 export const getActivities = async (req, res) => {
   try {
-    const activities = await DataService.getAllActivities(req.query);
-    if (!activities || activities.length === 0) {
-      return successResponse(res, [], 'No activities found');
-    }
-    successResponse(res, activities);
+    // 🎯 ΔΙΟΡΘΩΣΗ: Διαβάζουμε και τις δύο πιθανές ονομασίες για τη δυσκολία
+    const { 
+        type, 
+        location, 
+        dateFrom, 
+        dateTo, 
+        maxParticipants, 
+        completed 
+    } = req.query;
+
+    // Προσπάθεια ανάγνωσης difficultyLevel Η difficulty (για ασφάλεια)
+    const difficultyParam = req.query.difficultyLevel || req.query.difficulty;
+
+    const filters = {
+        type: type ? String(type).trim() : undefined,
+        location: location ? String(location).trim() : undefined,
+        
+        // Περνάμε όποιο από τα δύο βρέθηκε
+        difficultyLevel: difficultyParam ? String(difficultyParam).trim() : undefined,
+        
+        dateFrom: dateFrom ? String(dateFrom).trim() : undefined,
+        dateTo: dateTo ? String(dateTo).trim() : undefined,
+        completed: completed ? String(completed).trim() : undefined,
+        maxParticipants: maxParticipants ? String(maxParticipants).trim() : undefined,
+    };
+    
+    console.log('--- DEBUG FILTERS ---');
+    console.log('Received Query:', req.query);
+    console.log('Applied Filters:', filters);
+    
+    const activities = await DataService.getAllActivities(filters);
+    
+    // Αν δεν βρεθούν, επιστρέφουμε κενό array (200 OK) αντί για error, είναι πιο σωστό για φίλτρα
+    successResponse(res, activities || []);
   } catch (error) {
+    console.error('Filter Error:', error);
     errorResponse(res, error);
   }
 };
@@ -77,7 +106,6 @@ export const getActivityDetails = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: 'Activity not found' });
-    // Στέλνουμε ολόκληρο το flat activity object
     successResponse(res, activity);
   } catch (error) {
     errorResponse(res, error);
@@ -111,33 +139,25 @@ export const updateActivityDetails = async (req, res) => {
 
 // --- Participation & Management ---
 
-// --- Participation & Management ---
-// controllers/activityController.js
-
 export const joinActivity = async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const activityId = req.params.activityId;
 
-    // ΠΑΝΤΑ raw mock activity (ΟΧΙ view!)
     const activity = await DataService.getActivityById(activityId);
-    console.log('JOIN DEBUG activity:', activity); // <-- βοηθητικό log
 
     if (!activity) {
       return res.status(404).json({ message: 'Activity not found' });
     }
 
-    // 1) Έλεγχος αν ήδη συμμετέχεις
     if (activity.participants.includes(userId)) {
       return res
         .status(400)
         .json({ message: 'You are already participating in this activity.' });
     }
 
-    // 2) Έλεγχος χωρητικότητας (maxParticipants από details)
     const maxParticipants = Number(activity.details.maxParticipants);
     const current = activity.participants.length;
-    console.log('JOIN DEBUG: current =', current, 'max =', maxParticipants);
 
     if (current >= maxParticipants) {
       return res
@@ -145,7 +165,6 @@ export const joinActivity = async (req, res) => {
         .json({ message: 'This activity has no available spots!' });
     }
 
-    // 3) Δημιουργία join request
     const newRequest = await DataService.createJoinRequest(userId, activityId);
     successResponse(
       res,
@@ -157,8 +176,6 @@ export const joinActivity = async (req, res) => {
     errorResponse(res, error);
   }
 };
-
-
 
 export const manageJoinRequest = async (req, res) => {
   try {
@@ -201,7 +218,7 @@ export const leaveActivity = async (req, res) => {
   }
 };
 
-// --- Social Actions (Pins, Share, Message, Save) ---
+// --- Social Actions ---
 
 export const pinActivity = async (req, res) => {
   try {
@@ -257,7 +274,6 @@ export const getPinnedActivities = async (req, res) => {
   try {
     const userId = req.params.userId;
     const activities = await DataService.getPinnedActivities(userId);
-
     return successResponse(res, activities);
   } catch (error) {
     errorResponse(res, error);
@@ -274,10 +290,8 @@ export const unpinActivity = async (req, res) => {
         .status(404)
         .json({ success: false, message: 'Pin not found' });
     }
-
     successResponse(res, removed, 'The activity is unpinned successfully');
   } catch (error) {
     errorResponse(res, error);
   }
 };
-

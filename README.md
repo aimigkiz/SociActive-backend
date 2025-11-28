@@ -1,4 +1,3 @@
-
 # SociActive API
 
 A Node.js/Express REST API enabling users to link up for outdoor activities.
@@ -15,4 +14,3 @@ A Node.js/Express REST API enabling users to link up for outdoor activities.
 2. Install dependencies:
    ```bash
    npm install
-

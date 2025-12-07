@@ -13,6 +13,14 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
+// Health check για tests / monitoring
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Routes
+app.use('/', routes);
+
 // Routes
 app.use('/', routes);
 

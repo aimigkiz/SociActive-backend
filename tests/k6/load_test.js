@@ -9,9 +9,9 @@ export const options = {
     { duration: '10s', target: 0 },  // Ramp-down
   ],
   thresholds: {
-    // R-25: Target < 80ms. Scaled to 200ms for CI overhead protection.
+    // R-25: Target < 80ms.
     // abortOnFail: true -> Σταματάει αν αποτύχει (Best Practice από Εργαστήριο)
-    http_req_duration: [{ threshold: 'p(95)<200', abortOnFail: true }], 
+    http_req_duration: [{ threshold: 'p(95)<80', abortOnFail: true }], 
     
     // Fail if > 1% errors
     http_req_failed: [{ threshold: 'rate<0.01', abortOnFail: true }],   

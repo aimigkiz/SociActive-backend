@@ -10,9 +10,9 @@ export const options = {
     { duration: '5s', target: 0 },
   ],
   thresholds: {
-    // Στο Spike είμαστε λίγο πιο ελαστικοί (5% errors, 500ms χρόνο)
+    // Στο Spike είμαστε λίγο πιο ελαστικοί (5% errors, 200ms χρόνο)
     http_req_failed: [{ threshold: 'rate<0.05', abortOnFail: true }],
-    http_req_duration: [{ threshold: 'p(95)<500', abortOnFail: true }], 
+    http_req_duration: [{ threshold: 'p(95)<200', abortOnFail: true }], 
   },
 };
 

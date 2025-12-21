@@ -7,28 +7,64 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Job 1: Testing (CI)
-  ci:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (v20 as per Lab)
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run Tests (AVA/Unit)
+      # 1. Unit Tests (Προηγούμενο βήμα)
+      - name: Run Unit Tests
         run: npm test
 
-  # Job 2: Deployment (CD)
-  cd:
-    needs: ci
+      # 2. Start Server (Method from Lab Manual)
+      - name: Start Node.js server
+        run: |
+          nohup node server.js > server.log 2>&1 & 
+          echo "Server started with PID $!"
+
+      # 3. Wait for Server
+      - name: Wait for server to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/users/1/activities > /dev/null 2>&1; then
+              echo "Server is ready!"
+              exit 0
+            fi
+            echo "Waiting for server... (attempt $i/30)"
+            sleep 2
+          done
+          echo "Server failed to start"
+          cat server.log
+          exit 1
+
+      # 4. Setup k6
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+
+      # 5. Load Test (R-23/R-25)
+      - name: Run k6 Load Test
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/k6/load_test.js
+
+      # 6. Spike Test
+      - name: Run k6 Spike Test
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/k6/spike_test.js
+
+  deploy:
+    needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:

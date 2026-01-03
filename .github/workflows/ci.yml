@@ -51,17 +51,29 @@ jobs:
       - name: Setup K6
         uses: grafana/setup-k6-action@v1
 
-      # 5. Load Test (R-23/R-25)
-      - name: Run k6 Load Test
+      # 5. Load Test - Route 1: Activities
+      - name: Run k6 Load Test - Activities
         uses: grafana/run-k6-action@v1
         with:
-          path: tests/k6/load_test.js
+          path: tests/k6/load_test_activities.js
 
-      # 6. Spike Test
-      - name: Run k6 Spike Test
+      # 6. Load Test - Route 2: Pinned Activities
+      - name: Run k6 Load Test - Pinned
         uses: grafana/run-k6-action@v1
         with:
-          path: tests/k6/spike_test.js
+          path: tests/k6/load_test_pinned.js
+
+      # 7. Spike Test - Route 1: Activities
+      - name: Run k6 Spike Test - Activities
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/k6/spike_test_activities.js
+
+      # 8. Spike Test - Route 2: Pinned Activities
+      - name: Run k6 Spike Test - Pinned
+        uses: grafana/run-k6-action@v1
+        with:
+          path: tests/k6/spike_test_pinned.js
 
   deploy:
     needs: test

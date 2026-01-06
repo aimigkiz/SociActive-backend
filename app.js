@@ -21,9 +21,6 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/', routes);
 
-// Routes
-app.use('/', routes);
-
 // Error Handler
 app.use(errorHandler);
 

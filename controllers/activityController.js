@@ -32,10 +32,6 @@ export const getActivities = async (req, res) => {
         maxParticipants: maxParticipants ? String(maxParticipants).trim() : undefined,
     };
     
-    console.log('--- DEBUG FILTERS ---');
-    console.log('Received Query:', req.query);
-    console.log('Applied Filters:', filters);
-    
     const activities = await DataService.getAllActivities(filters);
     
     // Αν δεν βρεθούν, επιστρέφουμε κενό array (200 OK) αντί για error, είναι πιο σωστό για φίλτρα
@@ -63,10 +59,10 @@ export const getActivityPage = async (req, res) => {
     const activity = await DataService.getActivityViewById(
       req.params.activityId
     );
-    if (!activity)
-      return res
-        .status(404)
-        .json({ success: false, message: 'Activity not found' });
+    if (!activity) {
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
+    }
     successResponse(
       res,
       activity,
@@ -84,9 +80,8 @@ export const cancelActivity = async (req, res) => {
       !activity ||
       parseInt(activity.hostId) !== parseInt(req.params.userId)
     ) {
-      return res
-        .status(404)
-        .json({ message: 'Activity not found or not authorized' });
+      const error = new Error('Activity not found or not authorized');
+      return errorResponse(res, error, 404);
     }
     await DataService.deleteActivity(req.params.activityId);
     res.status(204).send();
@@ -102,10 +97,10 @@ export const getActivityDetails = async (req, res) => {
     const activity = await DataService.getActivityViewById(
       req.params.activityId
     );
-    if (!activity)
-      return res
-        .status(404)
-        .json({ success: false, message: 'Activity not found' });
+    if (!activity) {
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
+    }
     successResponse(res, activity);
   } catch (error) {
     errorResponse(res, error);
@@ -119,9 +114,8 @@ export const updateActivityDetails = async (req, res) => {
       !activity ||
       parseInt(activity.hostId) !== parseInt(req.params.userId)
     ) {
-      return res
-        .status(404)
-        .json({ message: 'Activity not found or not authorized' });
+      const error = new Error('Activity not found or not authorized');
+      return errorResponse(res, error, 404);
     }
     const updated = await DataService.updateActivity(
       req.params.activityId,
@@ -147,22 +141,21 @@ export const joinActivity = async (req, res) => {
     const activity = await DataService.getActivityById(activityId);
 
     if (!activity) {
-      return res.status(404).json({ message: 'Activity not found' });
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
     }
 
     if (activity.participants.includes(userId)) {
-      return res
-        .status(400)
-        .json({ message: 'You are already participating in this activity.' });
+      const error = new Error('You are already participating in this activity.');
+      return errorResponse(res, error, 400);
     }
 
     const maxParticipants = Number(activity.details.maxParticipants);
     const current = activity.participants.length;
 
     if (current >= maxParticipants) {
-      return res
-        .status(400)
-        .json({ message: 'This activity has no available spots!' });
+      const error = new Error('This activity has no available spots!');
+      return errorResponse(res, error, 400);
     }
 
     const newRequest = await DataService.createJoinRequest(userId, activityId);
@@ -183,8 +176,10 @@ export const manageJoinRequest = async (req, res) => {
       req.params.joinRequestId,
       req.body.status
     );
-    if (!updatedRequest)
-      return res.status(404).json({ message: 'Join-request not found' });
+    if (!updatedRequest) {
+      const error = new Error('Join-request not found');
+      return errorResponse(res, error, 404);
+    }
     successResponse(
       res,
       updatedRequest,
@@ -198,20 +193,22 @@ export const manageJoinRequest = async (req, res) => {
 export const leaveActivity = async (req, res) => {
   try {
     const activity = await DataService.getActivityById(req.params.activityId);
-    if (!activity)
-      return res.status(404).json({ message: 'Activity not found' });
+    if (!activity) {
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
+    }
     if (activity.completed) {
-      return res.status(400).json({
-        message:
-          "The activity has already started and the user can't leave"
-      });
+      const error = new Error("The activity has already started and the user can't leave");
+      return errorResponse(res, error, 400);
     }
     const deleted = await DataService.deleteParticipation(
       req.params.userId,
       req.params.activityId
     );
-    if (!deleted)
-      return res.status(404).json({ message: 'Participation not found' });
+    if (!deleted) {
+      const error = new Error('Participation not found');
+      return errorResponse(res, error, 404);
+    }
     res.status(204).send();
   } catch (error) {
     errorResponse(res, error);
@@ -286,9 +283,8 @@ export const unpinActivity = async (req, res) => {
     const removed = await DataService.deletePin(userId, activityId);
 
     if (!removed) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Pin not found' });
+      const error = new Error('Pin not found');
+      return errorResponse(res, error, 404);
     }
     successResponse(res, removed, 'The activity is unpinned successfully');
   } catch (error) {

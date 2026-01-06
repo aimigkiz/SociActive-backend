@@ -23,8 +23,14 @@ export const sendNotification = async (req, res) => {
 export const submitReview = async (req, res) => {
   try {
     const activity = await DataService.getActivityById(req.params.activityId);
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
-    if (!activity.completed) return res.status(403).json({ message: "The activity hasn't been completed yet!" });
+    if (!activity) {
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
+    }
+    if (!activity.completed) {
+      const error = new Error("The activity hasn't been completed yet!");
+      return errorResponse(res, error, 403);
+    }
     
     const newReview = await DataService.createReview(req.params.userId, req.params.activityId, req.body);
     successResponse(res, newReview, 'Review successfully submitted', 201);
@@ -43,7 +49,10 @@ export const rateUser = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const profile = await DataService.getUserProfile(req.params.userId, req.params.profileId);
-    if (!profile) return res.status(404).json({ success: false, message: 'User or profile not found' });
+    if (!profile) {
+      const error = new Error('User or profile not found');
+      return errorResponse(res, error, 404);
+    }
     successResponse(res, profile);
   } catch (error) { errorResponse(res, error); }
 };
@@ -67,7 +76,10 @@ export const getParticipatedActivities = async (req, res) => {
 export const updatePoints = async (req, res) => {
   try {
     const result = await DataService.updatePoints(req.params.userId, req.body.addedPoints);
-    if (!result) return res.status(404).json({ message: 'User not found' });
+    if (!result) {
+      const error = new Error('User not found');
+      return errorResponse(res, error, 404);
+    }
     successResponse(res, result, 'Points updated successfully');
   } catch (error) { errorResponse(res, error); }
 };

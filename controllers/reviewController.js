@@ -12,20 +12,26 @@ export const submitReview = async (req, res) => {
 
     // Validation
     if (!rating) {
-      return res.status(400).json({ success: false, message: 'Please rate the activity before submitting!' });
+      const error = new Error('Please rate the activity before submitting!');
+      return errorResponse(res, error, 400);
     }
 
     // Word limit validation (mock limit of 50 words)
     if (comment && comment.split(' ').length > 50) {
-      return res.status(400).json({ success: false, message: 'Words limitation exceeded!' });
+      const error = new Error('Words limitation exceeded!');
+      return errorResponse(res, error, 400);
     }
 
     // Check if activity exists and is completed
     const activity = await DataService.getActivityById(activityId);
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
+    if (!activity) {
+      const error = new Error('Activity not found');
+      return errorResponse(res, error, 404);
+    }
 
     if (!activity.completed) {
-      return res.status(403).json({ success: false, message: "The activity hasn't been completed yet!" });
+      const error = new Error("The activity hasn't been completed yet!");
+      return errorResponse(res, error, 403);
     }
 
     const newReview = await DataService.createReview(userId, activityId, { rating, comment });

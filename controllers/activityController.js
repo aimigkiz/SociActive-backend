@@ -2,6 +2,19 @@
 import * as DataService from '../services/dataService.js';
 import { successResponse, errorResponse } from '../utils/responses.js';
 
+// Minimal input validation helpers - targeted fixes without breaking tests
+const sanitizeString = (value) => {
+  return value ? String(value).trim() : undefined;
+};
+
+const validatePositiveInteger = (value, fieldName) => {
+  const num = parseInt(value, 10);
+  if (isNaN(num) || num <= 0) {
+    throw new Error(`${fieldName} must be a positive integer`);
+  }
+  return num;
+};
+
 // --- Activity Retrieval & CRUD ---
 
 export const getActivities = async (req, res) => {
@@ -44,8 +57,9 @@ export const getActivities = async (req, res) => {
 
 export const hostActivity = async (req, res) => {
   try {
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
     const newActivity = await DataService.createActivity(
-      req.params.userId,
+      userId,
       req.body
     );
     successResponse(res, newActivity, 'Activity hosted successfully', 201);
@@ -56,9 +70,9 @@ export const hostActivity = async (req, res) => {
 
 export const getActivityPage = async (req, res) => {
   try {
-    const activity = await DataService.getActivityViewById(
-      req.params.activityId
-    );
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const activity = await DataService.getActivityViewById(activityId);
     if (!activity) {
       const error = new Error('Activity not found');
       return errorResponse(res, error, 404);
@@ -75,15 +89,17 @@ export const getActivityPage = async (req, res) => {
 
 export const cancelActivity = async (req, res) => {
   try {
-    const activity = await DataService.getActivityById(req.params.activityId);
+    const activityId = sanitizeString(req.params.activityId);
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activity = await DataService.getActivityById(activityId);
     if (
       !activity ||
-      parseInt(activity.hostId) !== parseInt(req.params.userId)
+      parseInt(activity.hostId, 10) !== userId
     ) {
       const error = new Error('Activity not found or not authorized');
       return errorResponse(res, error, 404);
     }
-    await DataService.deleteActivity(req.params.activityId);
+    await DataService.deleteActivity(activityId);
     res.status(204).send();
   } catch (error) {
     errorResponse(res, error);
@@ -94,9 +110,9 @@ export const cancelActivity = async (req, res) => {
 
 export const getActivityDetails = async (req, res) => {
   try {
-    const activity = await DataService.getActivityViewById(
-      req.params.activityId
-    );
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const activity = await DataService.getActivityViewById(activityId);
     if (!activity) {
       const error = new Error('Activity not found');
       return errorResponse(res, error, 404);
@@ -109,18 +125,20 @@ export const getActivityDetails = async (req, res) => {
 
 export const updateActivityDetails = async (req, res) => {
   try {
-    const activity = await DataService.getActivityById(req.params.activityId);
+    const activityId = sanitizeString(req.params.activityId);
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    if (!req.body || typeof req.body !== 'object') {
+      throw new Error('Request body must be provided');
+    }
+    const activity = await DataService.getActivityById(activityId);
     if (
       !activity ||
-      parseInt(activity.hostId) !== parseInt(req.params.userId)
+      parseInt(activity.hostId, 10) !== userId
     ) {
       const error = new Error('Activity not found or not authorized');
       return errorResponse(res, error, 404);
     }
-    const updated = await DataService.updateActivity(
-      req.params.activityId,
-      req.body
-    );
+    const updated = await DataService.updateActivity(activityId, req.body);
     successResponse(
       res,
       updated,
@@ -135,8 +153,9 @@ export const updateActivityDetails = async (req, res) => {
 
 export const joinActivity = async (req, res) => {
   try {
-    const userId = parseInt(req.params.userId);
-    const activityId = req.params.activityId;
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
 
     const activity = await DataService.getActivityById(activityId);
 
@@ -151,6 +170,9 @@ export const joinActivity = async (req, res) => {
     }
 
     const maxParticipants = Number(activity.details.maxParticipants);
+    if (isNaN(maxParticipants) || maxParticipants <= 0) {
+      throw new Error('Invalid maxParticipants value');
+    }
     const current = activity.participants.length;
 
     if (current >= maxParticipants) {
@@ -172,9 +194,14 @@ export const joinActivity = async (req, res) => {
 
 export const manageJoinRequest = async (req, res) => {
   try {
+    const joinRequestId = sanitizeString(req.params.joinRequestId);
+    if (!joinRequestId) throw new Error('joinRequestId is required');
+    const status = req.body?.status;
+    if (!status) throw new Error('status is required in request body');
+    const validatedStatus = sanitizeString(status);
     const updatedRequest = await DataService.manageJoinRequest(
-      req.params.joinRequestId,
-      req.body.status
+      joinRequestId,
+      validatedStatus
     );
     if (!updatedRequest) {
       const error = new Error('Join-request not found');
@@ -192,7 +219,10 @@ export const manageJoinRequest = async (req, res) => {
 
 export const leaveActivity = async (req, res) => {
   try {
-    const activity = await DataService.getActivityById(req.params.activityId);
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const activity = await DataService.getActivityById(activityId);
     if (!activity) {
       const error = new Error('Activity not found');
       return errorResponse(res, error, 404);
@@ -201,10 +231,7 @@ export const leaveActivity = async (req, res) => {
       const error = new Error("The activity has already started and the user can't leave");
       return errorResponse(res, error, 400);
     }
-    const deleted = await DataService.deleteParticipation(
-      req.params.userId,
-      req.params.activityId
-    );
+    const deleted = await DataService.deleteParticipation(userId, activityId);
     if (!deleted) {
       const error = new Error('Participation not found');
       return errorResponse(res, error, 404);
@@ -219,10 +246,10 @@ export const leaveActivity = async (req, res) => {
 
 export const pinActivity = async (req, res) => {
   try {
-    const pin = await DataService.createPin(
-      req.params.userId,
-      req.params.activityId
-    );
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const pin = await DataService.createPin(userId, activityId);
     successResponse(res, pin, 'The activity is pinned successfully', 201);
   } catch (error) {
     errorResponse(res, error);
@@ -231,11 +258,13 @@ export const pinActivity = async (req, res) => {
 
 export const shareActivity = async (req, res) => {
   try {
-    const share = await DataService.createShare(
-      req.params.userId,
-      req.params.activityId,
-      req.body.receiverIds
-    );
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const receiverIds = req.body?.receiverIds;
+    if (!receiverIds) throw new Error('receiverIds is required in request body');
+    if (!Array.isArray(receiverIds)) throw new Error('receiverIds must be an array');
+    const share = await DataService.createShare(userId, activityId, receiverIds);
     successResponse(res, share, 'The activity is shared successfully', 201);
   } catch (error) {
     errorResponse(res, error);
@@ -244,10 +273,17 @@ export const shareActivity = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const messageContent = req.body?.messageContent;
+    if (!messageContent) throw new Error('messageContent is required in request body');
+    const validatedContent = sanitizeString(messageContent);
+    if (!validatedContent || validatedContent.length === 0) throw new Error('messageContent cannot be empty');
     const message = await DataService.createMessage(
-      req.params.userId,
-      req.params.activityId,
-      req.body.messageContent
+      userId,
+      activityId,
+      validatedContent
     );
     successResponse(res, message, 'The message is sent successfully', 201);
   } catch (error) {
@@ -257,10 +293,10 @@ export const sendMessage = async (req, res) => {
 
 export const saveActivity = async (req, res) => {
   try {
-    const save = await DataService.createSave(
-      req.params.userId,
-      req.params.activityId
-    );
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
+    const save = await DataService.createSave(userId, activityId);
     successResponse(res, save, 'The activity is saved successfully', 201);
   } catch (error) {
     errorResponse(res, error);
@@ -269,7 +305,7 @@ export const saveActivity = async (req, res) => {
 
 export const getPinnedActivities = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
     const activities = await DataService.getPinnedActivities(userId);
     return successResponse(res, activities);
   } catch (error) {
@@ -279,7 +315,9 @@ export const getPinnedActivities = async (req, res) => {
 
 export const unpinActivity = async (req, res) => {
   try {
-    const { userId, activityId } = req.params;
+    const userId = validatePositiveInteger(req.params.userId, 'userId');
+    const activityId = sanitizeString(req.params.activityId);
+    if (!activityId) throw new Error('activityId is required');
     const removed = await DataService.deletePin(userId, activityId);
 
     if (!removed) {

@@ -5,13 +5,13 @@ export const options = {
   // Load Test για Route 2: Get Pinned Activities (πιο ελαφρύ endpoint - filtered data)
   // Scaled για GitHub Runner environment
   stages: [
-    { duration: '8s', target: 60 },  // Ramp-up ταχύτερο
-    { duration: '25s', target: 60 }, // Stable load - περισσότεροι VUs λόγω ελαφρύτερου query
+    { duration: '8s', target: 2000 },  // Ramp-up ταχύτερο
+    { duration: '25s', target: 2000 }, // Stable load - περισσότεροι VUs λόγω ελαφρύτερου query
     { duration: '7s', target: 0 },   // Ramp-down
   ],
   thresholds: {
     // Πιο αυστηρά όρια - αναμένουμε ταχύτερη απόκριση
-    http_req_duration: [{ threshold: 'p(95)<60', abortOnFail: true }], 
+    http_req_duration: [{ threshold: 'p(95)<80', abortOnFail: true }], 
     
     // Fail if > 1% errors
     http_req_failed: [{ threshold: 'rate<0.01', abortOnFail: true }],   

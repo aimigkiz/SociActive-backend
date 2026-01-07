@@ -5,9 +5,9 @@ export const options = {
   // Spike Test για Route 1: Get Activities (βαρύτερο endpoint)
   // Πιο σταδιακό spike λόγω πολυπλοκότητας
   stages: [
-    { duration: '3s', target: 10 },
-    { duration: '7s', target: 80 },  // SPIKE! 80 VUs (λιγότεροι από το pinned)
-    { duration: '12s', target: 80 }, // Μεγαλύτερη διάρκεια plateau
+    { duration: '3s', target: 100 },
+    { duration: '3s', target: 1000 },  // SPIKE! 1000 VUs (λιγότεροι από το pinned)
+    { duration: '10s', target: 1000 }, // Μεγαλύτερη διάρκεια plateau
     { duration: '5s', target: 0 },
   ],
   thresholds: {

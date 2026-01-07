@@ -5,9 +5,9 @@ export const options = {
   // Spike Test για Route 2: Get Pinned Activities (ελαφρύτερο endpoint)
   // Πιο απότομο spike - ελέγχει αντοχή σε extreme traffic
   stages: [
-    { duration: '2s', target: 10 },
-    { duration: '4s', target: 120 }, // AGGRESSIVE SPIKE! 120 VUs (περισσότεροι από activities)
-    { duration: '8s', target: 120 }, // Συντομότερο plateau
+    { duration: '2s', target: 100 },
+    { duration: '4s', target: 2500 }, // AGGRESSIVE SPIKE! 3500 VUs (περισσότεροι από activities)
+    { duration: '8s', target: 2500 }, // Συντομότερο plateau
     { duration: '4s', target: 0 },   // Γρήγορο recovery
   ],
   thresholds: {

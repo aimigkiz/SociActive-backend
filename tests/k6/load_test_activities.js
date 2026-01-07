@@ -5,8 +5,8 @@ export const options = {
   // Load Test για Route 1: Get Activities (πιο βαρύ endpoint - φέρνει όλες τις δραστηριότητες)
   // Scaled για GitHub Runner environment
   stages: [
-    { duration: '10s', target: 40 }, // Ramp-up
-    { duration: '30s', target: 40 }, // Stable load - λιγότεροι VUs λόγω βαρύτερου query
+    { duration: '10s', target: 1000 }, // Ramp-up
+    { duration: '30s', target: 1000 }, // Stable load - λιγότεροι VUs λόγω βαρύτερου query
     { duration: '10s', target: 0 },  // Ramp-down
   ],
   thresholds: {

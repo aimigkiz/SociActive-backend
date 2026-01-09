@@ -3,11 +3,14 @@ import { check, sleep } from 'k6';
 
 export const options = {
   // Load Test για Route 1: Get Activities (πιο βαρύ endpoint - φέρνει όλες τις δραστηριότητες)
-  // Scaled για GitHub Runner environment
+  // Proper load test durations for sustained load analysis
   stages: [
-    { duration: '10s', target: 1000 }, // Ramp-up
-    { duration: '30s', target: 1000 }, // Stable load - λιγότεροι VUs λόγω βαρύτερου query
-    { duration: '10s', target: 0 },  // Ramp-down
+    { duration: '30s', target: 250 },  // Ramp-up: gradually increase to target load
+    { duration: '1m', target: 400 },  // Further ramp-up to moderate load
+    { duration: '1m', target: 600 }, // Further ramp-up to higher load
+    { duration: '1m', target: 700 }, // Ramp-up to peak load
+    { duration: '2m30s', target: 700 }, // Stable load: sustained load to observe system behavior
+    { duration: '1m', target: 0 },     // Ramp-down: gracefully decrease load
   ],
   thresholds: {
     // Πιο χαλαρά όρια λόγω πολλαπλών εγγραφών

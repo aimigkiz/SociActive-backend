@@ -3,11 +3,14 @@ import { check, sleep } from 'k6';
 
 export const options = {
   // Load Test για Route 2: Get Pinned Activities (πιο ελαφρύ endpoint - filtered data)
-  // Scaled για GitHub Runner environment
+  // Proper load test durations for sustained load analysis
   stages: [
-    { duration: '8s', target: 2000 },  // Ramp-up ταχύτερο
-    { duration: '25s', target: 2000 }, // Stable load - περισσότεροι VUs λόγω ελαφρύτερου query
-    { duration: '7s', target: 0 },   // Ramp-down
+    { duration: '30s', target: 500 },  // Ramp-up: gradually increase to target load
+    { duration: '30s', target: 1000 }, // Further ramp-up to moderate load
+    { duration: '30s', target: 1500 }, // Further ramp-up to higher load
+    { duration: '1m', target: 2000 }, // Ramp-up to peak load
+    { duration: '3m', target: 2000 }, // Peak load: maintain peak load for extended analysis
+    { duration: '1m', target: 0 },     // Ramp-down: gracefully decrease load
   ],
   thresholds: {
     // Πιο αυστηρά όρια - αναμένουμε ταχύτερη απόκριση

@@ -1,0 +1,68 @@
+ΑΝΤΙ ΓΙΑ: export const getAll = async (req, res) => { ... αν το req δεν χρησιμοποιείται
+ΓΡΑΨΕ:    export const getAll = async (_, res) => {
+
+if (myVariable) { /* fake check to make it used */ }
+
+else {
+  if (condition) { ... }
+} => ΘΕΩΡΕΙΤΑΙ ΚΑΚΟΣ ΣΧΕΔΙΑΣΜΟΣ ΝΑ ΕΧΩ ΝΕΑ IF ΜΕΣΑ ΣΕ ΕΝΑ ELSE BLOCK
+ΣΩΣΤΟ: else if (condition) { ... }
+
+AVA BASICS:
+
+t.is(actual, expected): Ελέγχει αν δύο τιμές είναι απόλυτα ίσες (π.χ. status codes, strings).
+
+response.status: Παίρνει το HTTP status code.
+
+await response.json(): Μετατρέπει τα δεδομένα που επιστρέφει το API σε JavaScript object
+
+
+ΠΑΡΑΔΕΙΓΜΑ
+test('GET /api/v1/organizers/1 returns correct data', async (t) => {
+  // 1. Κάνουμε το HTTP request στο σωστό endpoint
+  const response = await t.context.fetch('api/v1/organizers/1');
+
+  // 2. Ελέγχουμε αν ο Server απάντησε με 200 OK
+  t.is(response.status, 200);
+
+  // 3. Διαβάζουμε το σώμα της απάντησης
+  const body = await response.json();
+
+  // 4. Ελέγχουμε το property που μας ζητάει (Προσοχή αν είναι μέσα στο .data)
+  t.is(body.data.organizationName, 'Night Owl Productions');
+});
+
+
+
+CYPRESS BASICS
+
+Εντολή	Τι κάνει	Παράδειγμα χρήσης
+cy.visit('url')	Ανοίγει μια σελίδα	cy.visit('http://localhost:3000/')
+cy.get('selector')	Βρίσκει στοιχεία με βάση κλάση, id ή tag	cy.get('.event-card') ή cy.get('#submit-btn')
+cy.contains('text')	Βρίσκει ένα στοιχείο βάσει του κειμένου του	cy.contains('button', 'Interested')
+.should('...')	Κάνει assertion (επιβεβαίωση)	.should('have.length', 5) ή .should('be.visible')
+.click()	Κάνει κλικ σε ένα στοιχείο	cy.get('.event-card').first().click()
+cy.url()	Παίρνει το τρέχον URL για έλεγχο	cy.url().should('include', '/login')
+
+ΠΑΡΑΔΕΙΓΜΑ
+it('Should execute the events flow', () => {
+  // Βήμα 1: Επίσκεψη και έλεγχος πλήθους στοιχείων (have.length)
+  cy.visit('http://localhost:3000/');
+  cy.get('.event-card').should('have.length', 5);
+
+  // Βήμα 2: Κλικ στο πρώτο στοιχείο και έλεγχος αλλαγής URL (include)
+  cy.get('.event-card').first().should('be.visible').click();
+  cy.url().should('include', '/events/');
+
+  // Βήμα 3: Αλληλεπίδραση με κουμπί κειμένου και έλεγχος ανακατεύθυνσης
+  cy.contains('button', 'Interested').click();
+  cy.url().should('include', '/login');
+});
+
+
+npm install
+npm run dev
+npm start
+npm test
+npx cypress open
+

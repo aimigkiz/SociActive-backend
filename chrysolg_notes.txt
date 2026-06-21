@@ -28,6 +28,9 @@ test('GET /api/v1/organizers/1 returns correct data', async (t) => {
   // 3. Διαβάζουμε το σώμα της απάντησης
   const body = await response.json();
 
+  // (Προαιρετικό) Εκτύπωση στο τερματικό για να δεις τη δομή αν κάτι πάει στραβά
+  t.log('Response body:', body);
+
   // 4. Ελέγχουμε το property που μας ζητάει (Προσοχή αν είναι μέσα στο .data)
   t.is(body.data.organizationName, 'Night Owl Productions');
 });
@@ -47,7 +50,7 @@ cy.url()	Παίρνει το τρέχον URL για έλεγχο	cy.url().shoul
 ΠΑΡΑΔΕΙΓΜΑ
 it('Should execute the events flow', () => {
   // Βήμα 1: Επίσκεψη και έλεγχος πλήθους στοιχείων (have.length)
-  cy.visit('http://localhost:3000/');
+  cy.visit('http://localhost:3000/'); //cy.visit('/');
   cy.get('.event-card').should('have.length', 5);
 
   // Βήμα 2: Κλικ στο πρώτο στοιχείο και έλεγχος αλλαγής URL (include)
